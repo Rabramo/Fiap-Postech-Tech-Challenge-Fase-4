@@ -95,9 +95,6 @@ def carregar_dados():
     # URL do arquivo Parquet no GitHub (certifique-se de usar o link RAW)
     url = "https://raw.githubusercontent.com/Rabramo/Fiap-Postech-Tech-Challenge-Fase-4
 //main/ipea_brent_20250217.parquet"
-ipea_brent_20250217.parquet
-
-
     try:
         # Baixar o arquivo como stream de bytes
         response = requests.get(url)
