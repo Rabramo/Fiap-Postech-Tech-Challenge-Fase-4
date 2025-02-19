@@ -93,28 +93,34 @@ cor_max = "#D62728"  # Vermelho impactante
 cor_min = "#2CA02C"  # Verde destacado
 cor_destaque = "#FF7F0E"  # Cor quente para anos importantes
 
-# Criando DF a partir do parquet com dados do Brent do Ipea (https://www.ipeadata.gov.br/Default.aspx), usando r, raw string para evitar problemas com barras
-# Função para carregar dados
+####### CARREGAMENTO DO ARQUIVO PARQUET ########
 st.title("Carregar Arquivo Parquet do Google Drive no Streamlit")
 
 # ID do arquivo no Google Drive
 file_id = "1LjzB8BGdUroPRGKcHqOOLwCLbeRV_EUy"
+output_file = "data/arquivo.parquet"
 
-# Criar URL de download
-url = f"https://drive.google.com/uc?id={file_id}"
-output_file = "arquivo.parquet"
+# Criar pasta "data" se não existir
+if not os.path.exists("data"):
+    os.makedirs("data")
 
-# Baixar o arquivo do Google Drive
+# Verificar se o arquivo já existe antes de fazer o download
+if not os.path.exists(output_file):
+    try:
+        url = f"https://drive.google.com/uc?id={file_id}"
+        gdown.download(url, output_file, quiet=False)
+        st.success("✅ Arquivo baixado com sucesso!")
+    except Exception as e:
+        st.error(f"🚨 Erro ao baixar o arquivo: {e}")
+
+# Tentar carregar o arquivo Parquet
 try:
-    gdown.download(url, output_file, quiet=False)
-    
-    # Tentar ler o arquivo com PyArrow
     df = pd.read_parquet(output_file, engine="pyarrow")
-    
     st.write("✅ Dados carregados com sucesso!")
     st.dataframe(df)
 except Exception as e:
-    st.error(f"🚨 Erro ao carregar o arquivo: {e}")
+    st.error(f"🚨 Erro ao carregar o arquivo Parquet: {e}")
+
 
 # Recuperando datas selecionadas na página Brent
 if "ano_inicial" in st.session_state and "ano_final" in st.session_state:
