@@ -6,9 +6,7 @@ import matplotlib.pyplot as plt  # Visualização de gráficos
 import seaborn as sns  # Visualização avançada
 import numpy as np  # Cálculos matemáticos
 import plotly.graph_objects as go  # Gráficos interativos avançados
-import gdown
-import os
-import pyarrow.parquet as pq
+import yfinance as yf
 from datetime import datetime, timedelta  # Manipulação de datas
 from scipy.interpolate import make_interp_spline  # Suavização de gráficos
 from statsmodels.tsa.stattools import adfuller  # Teste ADF para estacionariedade
@@ -38,33 +36,31 @@ cor_max = "#D62728"  # Vermelho forte
 cor_min = "#2CA02C"  # Verde destacado
 cor_destaque = "#FF7F0E"  # Cor quente para anos importantes
 
-# Criar pasta "data" se não existir
-if not os.path.exists("data"):
-    os.makedirs("data")
-
-####### FUNÇÕES ########
-
-def baixar_e_carregar_parquet(file_id: str, output_file: str) -> pd.DataFrame:
+####### FUNÇÃO PARA OBTER DADOS DO YFINANCE ########
+@st.cache_data
+def obter_dados_brent(periodo="37"):
     """
-    Baixa o arquivo Parquet do Google Drive e carrega em um DataFrame.
-    Se o arquivo já existir, apenas carrega sem baixar novamente.
+    Obtém dados do preço do Brent Crude Oil (BZ=F) diretamente do Yahoo Finance.
+    
+    Parâmetros:
+    - periodo: período de tempo para recuperar os dados (ex.: "1y", "5y", "10y", "max").
+    
+    Retorna:
+    - DataFrame com a série histórica do Brent.
     """
-    if not os.path.exists(output_file):
-        try:
-            url = f"https://drive.google.com/uc?id={file_id}"
-            gdown.download(url, output_file, quiet=False)
-            st.success("✅ Arquivo baixado com sucesso!")
-        except Exception as e:
-            st.error(f"🚨 Erro ao baixar o arquivo: {e}")
-            return None
+    brent = yf.Ticker("BZ=F")
+    df = brent.history(period=periodo)
+    df = df.reset_index()
+    df = df.rename(columns={"Date": "data", "Close": "preco"})
+    return df
 
-    try:
-        df = pd.read_parquet(output_file, engine="pyarrow")
-        st.write("✅ Dados carregados com sucesso!")
-        return df
-    except Exception as e:
-        st.error(f"🚨 Erro ao carregar o arquivo Parquet: {e}")
-        return None
+####### CARREGAMENTO DOS DADOS ########
+st.title("Análise do Brent Crude Oil")
+
+try:
+    df = obter_dados_brent()
+    df["data"] = pd.to_datetime(df["data"])
+
 
 
 def mostrar_grafico_temporal(df: pd.DataFrame, titulo: str, eixo_x: str, eixo_y: str):
