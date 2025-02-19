@@ -92,15 +92,23 @@ cor_destaque = "#FF7F0E"  # Cor quente para anos importantes
 
 # Criando DF a partir do parquet com dados do Brent do Ipea (https://www.ipeadata.gov.br/Default.aspx), usando r, raw string para evitar problemas com barras
 # Função para carregar dados
-st.title("Carregar Arquivo Parquet")
+@st.cache_data
+def carregar_dados():
+    file_id = "1LjzB8BGdUroPRGKcHqOOLwCLbeRV_EUy"  # Substitua pelo ID do seu arquivo
+    url = f"https://drive.google.com/uc?id={file_id}"
+    output = "ipea_brent.parquet"
 
-uploaded_file = st.file_uploader("ipea_brent_20250217.parquet", type=["parquet"])
+    # Baixando o arquivo do Google Drive
+    gdown.download(url, output, quiet=False)
 
-if uploaded_file is not None:
-    df = pd.read_parquet(uploaded_file, engine="pyarrow")
+    # Lendo o arquivo Parquet
+    df = pd.read_parquet(output, engine="pyarrow")
     df['ano'] = df['data'].dt.year
-    st.write(df.head())  # Exibir os primeiros registros
 
+    # Remover o arquivo local depois de carregar (evita acúmulo de arquivos no Streamlit Cloud)
+    os.remove(output)
+
+    return df
 # Recuperando datas selecionadas na página Brent
 if "ano_inicial" in st.session_state and "ano_final" in st.session_state:
     data_inicio = pd.to_datetime(f"{st.session_state['ano_inicial']}-01-01")
