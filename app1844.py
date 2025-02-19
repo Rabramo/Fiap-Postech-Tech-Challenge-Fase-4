@@ -11,6 +11,7 @@ import requests
 import io
 import gdown
 import os
+import pyarrow.parquet as pq
 from datetime import datetime, timedelta  # Manipulação de datas e períodos de tempo
 from scipy.interpolate import make_interp_spline  # Interpolação para suavizar gráficos, útil para visualizações mais suaves
 from statsmodels.tsa.stattools import adfuller  # Teste de Dickey-Fuller aumentado (ADF) para verificar estacionariedade de séries temporais
@@ -94,24 +95,26 @@ cor_destaque = "#FF7F0E"  # Cor quente para anos importantes
 
 # Criando DF a partir do parquet com dados do Brent do Ipea (https://www.ipeadata.gov.br/Default.aspx), usando r, raw string para evitar problemas com barras
 # Função para carregar dados
-@st.cache_data
-def carregar_dados():
-    file_id = "1LjzB8BGdUroPRGKcHqOOLwCLbeRV_EUy"  
-    url = f"https://drive.google.com/uc?id={file_id}"
-    output = "/tmp/ipea_brent.parquet"  # Caminho temporário no Streamlit Cloud
+st.title("Carregar Arquivo Parquet do Google Drive no Streamlit")
 
-    # Baixando o arquivo do Google Drive
-    gdown.download(url, output, quiet=False)
+# ID do arquivo no Google Drive
+file_id = "1LjzB8BGdUroPRGKcHqOOLwCLbeRV_EUy"
 
-    # Lendo o arquivo Parquet do armazenamento local
-    df = pd.read_parquet(output, engine="pyarrow")
-    df['ano'] = df['data'].dt.year
+# Criar URL de download
+url = f"https://drive.google.com/uc?id={file_id}"
+output_file = "arquivo.parquet"
 
-    return df
-
-st.title("Carregar Arquivo Parquet do Google Drive")
-
-df = carregar_dados()
+# Baixar o arquivo do Google Drive
+try:
+    gdown.download(url, output_file, quiet=False)
+    
+    # Tentar ler o arquivo com PyArrow
+    df = pd.read_parquet(output_file, engine="pyarrow")
+    
+    st.write("✅ Dados carregados com sucesso!")
+    st.dataframe(df)
+except Exception as e:
+    st.error(f"🚨 Erro ao carregar o arquivo: {e}")
 
 # Recuperando datas selecionadas na página Brent
 if "ano_inicial" in st.session_state and "ano_final" in st.session_state:
