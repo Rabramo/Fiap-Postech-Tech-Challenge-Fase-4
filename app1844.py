@@ -96,7 +96,7 @@ cor_destaque = "#FF7F0E"  # Cor quente para anos importantes
 # Função para carregar dados
 @st.cache_data
 def carregar_dados():
-    file_id = "1LjzB8BGdUroPRGKcHqOOLwCLbeRV_EUy"  # Substitua pelo ID do seu arquivo do Google Drive
+    file_id = "1LjzB8BGdUroPRGKcHqOOLwCLbeRV_EUy"  
     url = f"https://drive.google.com/uc?id={file_id}"
     output = "/tmp/ipea_brent.parquet"  # Caminho temporário no Streamlit Cloud
 
