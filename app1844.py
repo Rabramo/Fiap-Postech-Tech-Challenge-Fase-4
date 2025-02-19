@@ -92,12 +92,35 @@ cor_destaque = "#FF7F0E"  # Cor quente para anos importantes
 # Função para carregar dados
 @st.cache_data
 def carregar_dados():
-    df = pd.read_parquet(r'/Users/rogerioabramoalvespretti/Desktop/Fiap-Postech-Tech-Challenge-Fase-4/ipea_brent_20250217.parquet')
-    df['ano'] = df['data'].dt.year
-    return df
+    # URL do arquivo Parquet no GitHub (certifique-se de usar o link RAW)
+    url = "https://raw.githubusercontent.com/Rabramo/Fiap-Postech-Tech-Challenge-Fase-4
+//main/ipea_brent_20250217.parquet"
+ipea_brent_20250217.parquet
 
+
+    try:
+        # Baixar o arquivo como stream de bytes
+        response = requests.get(url)
+        response.raise_for_status()  # Verifica se o download foi bem-sucedido
+
+        # Carregar o arquivo Parquet a partir dos bytes
+        df = pd.read_parquet(io.BytesIO(response.content), engine="pyarrow")
+
+        # Criar a coluna 'ano' extraindo do campo de data
+        df['ano'] = pd.to_datetime(df['data']).dt.year
+
+        return df
+    except Exception as e:
+        st.error(f"❌ Erro ao carregar os dados: {e}")
+        return None
+
+# Chamar a função para carregar os dados
 df = carregar_dados()
 
+# Exibir os dados no Streamlit
+if df is not None:
+    st.success("✅ Dados carregados com sucesso!")
+    st.dataframe(df)
 # Recuperando datas selecionadas na página Brent
 if "ano_inicial" in st.session_state and "ano_final" in st.session_state:
     data_inicio = pd.to_datetime(f"{st.session_state['ano_inicial']}-01-01")
