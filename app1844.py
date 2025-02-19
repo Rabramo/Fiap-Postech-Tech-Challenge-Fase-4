@@ -9,6 +9,8 @@ import numpy as np  # Cálculos matemáticos avançados e manipulação de array
 import plotly.graph_objects as go  # Biblioteca para criação de visualizações interativas, como gráficos de linha, barras e dispersão
 import requests
 import io
+import gdown
+import os
 from datetime import datetime, timedelta  # Manipulação de datas e períodos de tempo
 from scipy.interpolate import make_interp_spline  # Interpolação para suavizar gráficos, útil para visualizações mais suaves
 from statsmodels.tsa.stattools import adfuller  # Teste de Dickey-Fuller aumentado (ADF) para verificar estacionariedade de séries temporais
@@ -94,21 +96,23 @@ cor_destaque = "#FF7F0E"  # Cor quente para anos importantes
 # Função para carregar dados
 @st.cache_data
 def carregar_dados():
-    file_id = "1LjzB8BGdUroPRGKcHqOOLwCLbeRV_EUy"  # Substitua pelo ID do seu arquivo
+    file_id = "1LjzB8BGdUroPRGKcHqOOLwCLbeRV_EUy"  # Substitua pelo ID do seu arquivo do Google Drive
     url = f"https://drive.google.com/uc?id={file_id}"
-    output = "ipea_brent.parquet"
+    output = "/tmp/ipea_brent.parquet"  # Caminho temporário no Streamlit Cloud
 
     # Baixando o arquivo do Google Drive
     gdown.download(url, output, quiet=False)
 
-    # Lendo o arquivo Parquet
+    # Lendo o arquivo Parquet do armazenamento local
     df = pd.read_parquet(output, engine="pyarrow")
     df['ano'] = df['data'].dt.year
 
-    # Remover o arquivo local depois de carregar (evita acúmulo de arquivos no Streamlit Cloud)
-    os.remove(output)
-
     return df
+
+st.title("Carregar Arquivo Parquet do Google Drive")
+
+df = carregar_dados()
+
 # Recuperando datas selecionadas na página Brent
 if "ano_inicial" in st.session_state and "ano_final" in st.session_state:
     data_inicio = pd.to_datetime(f"{st.session_state['ano_inicial']}-01-01")
