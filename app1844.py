@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt  # Biblioteca para visualização de gráficos
 import seaborn as sns  # Biblioteca para visualização de dados avançada
 import numpy as np  # Cálculos matemáticos avançados e manipulação de arrays
 import plotly.graph_objects as go  # Biblioteca para criação de visualizações interativas, como gráficos de linha, barras e dispersão
+import requests
+import io
 from datetime import datetime, timedelta  # Manipulação de datas e períodos de tempo
 from scipy.interpolate import make_interp_spline  # Interpolação para suavizar gráficos, útil para visualizações mais suaves
 from statsmodels.tsa.stattools import adfuller  # Teste de Dickey-Fuller aumentado (ADF) para verificar estacionariedade de séries temporais
@@ -91,10 +93,17 @@ cor_destaque = "#FF7F0E"  # Cor quente para anos importantes
 # Criando DF a partir do parquet com dados do Brent do Ipea (https://www.ipeadata.gov.br/Default.aspx), usando r, raw string para evitar problemas com barras
 # Função para carregar dados
 @st.cache_data
-@st.cache_data
 def carregar_dados():
-    url = "https://github.com/Rabramo/Fiap-Postech-Tech-Challenge-Fase-4/blob/main/ipea_brent_20250217.parquet"
-    df = pd.read_parquet(url, engine="pyarrow")  # Adicione 'engine' para evitar conflitos
+    url = "https://raw.githubusercontent.com/seu-usuario/seu-repositorio/main/ipea_brent_20250217.parquet"
+    
+    # Baixando o arquivo
+    response = requests.get(url)
+    if response.status_code != 200:
+        st.error("Erro ao baixar o arquivo Parquet. Verifique a URL.")
+        return None
+
+    # Lendo o arquivo Parquet a partir da memória
+    df = pd.read_parquet(io.BytesIO(response.content), engine="pyarrow")
     df['ano'] = df['data'].dt.year
     return df
 
