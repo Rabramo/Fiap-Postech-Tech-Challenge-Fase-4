@@ -93,15 +93,23 @@ cor_destaque = "#FF7F0E"  # Cor quente para anos importantes
 # Criando DF a partir do parquet com dados do Brent do Ipea (https://www.ipeadata.gov.br/Default.aspx), usando r, raw string para evitar problemas com barras
 # Função para carregar dados
 @st.cache_data
-def carregar_dados(uploaded_file):
-    if uploaded_file is not None:
-        df = pd.read_parquet(uploaded_file, engine="pyarrow")
-        df['ano'] = df['data'].dt.year
-        return df
-    else:
+def carregar_dados():
+    url = "https://github.com/seu-usuario/seu-repositorio/raw/main/ipea_brent_20250217.parquet"
+
+    # Baixa o arquivo Parquet
+    response = requests.get(url)
+    if response.status_code != 200:
+        st.error("Erro ao baixar o arquivo Parquet. Verifique a URL.")
         return None
 
-st.title("Carregar Arquivo Parquet")
+    # Lê o arquivo diretamente da memória
+    df = pd.read_parquet(io.BytesIO(response.content), engine="pyarrow")
+    df['ano'] = df['data'].dt.year
+    return df
+
+df = carregar_dados()
+if df is not None:
+    st.write(df.head())  # Mostra os primeiros registros
 
 # Recuperando datas selecionadas na página Brent
 if "ano_inicial" in st.session_state and "ano_final" in st.session_state:
