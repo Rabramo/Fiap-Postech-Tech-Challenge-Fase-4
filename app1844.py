@@ -90,6 +90,7 @@ cor_max = "#D62728"  # Vermelho impactante
 cor_min = "#2CA02C"  # Verde destacado
 cor_destaque = "#FF7F0E"  # Cor quente para anos importantes
 
+####### CARREGAR DADOS ########
 # Criando DF a partir do parquet com dados do Brent do Ipea (https://www.ipeadata.gov.br/Default.aspx), usando r, raw string para evitar problemas com barras
 # Função para carregar dados
 @st.cache_data
@@ -114,7 +115,6 @@ def carregar_dados():
 
 # Chamar a função para carregar os dados
 df = carregar_dados()
-
 # Exibir os dados no Streamlit
 # if df is not None:
     st.success("✅ Dados carregados com sucesso!")
