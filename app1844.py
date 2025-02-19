@@ -94,7 +94,7 @@ cor_destaque = "#FF7F0E"  # Cor quente para anos importantes
 # Função para carregar dados
 @st.cache_data
 def carregar_dados():
-    # URL do arquivo Parquet no GitHub (certifique-se de usar o link RAW)
+    # URL do arquivo Parquet no GitHub usando link RAW
     url = "https://raw.githubusercontent.com/Rabramo/Fiap-Postech-Tech-Challenge-Fase-4/main/ipea_brent_20250217.parquet"
     try:
         # Baixar o arquivo como stream de bytes
@@ -116,9 +116,9 @@ def carregar_dados():
 df = carregar_dados()
 
 # Exibir os dados no Streamlit
-if df is not None:
+# if df is not None:
     st.success("✅ Dados carregados com sucesso!")
-    st.dataframe(df)
+#   st.dataframe(df)
 # Recuperando datas selecionadas na página Brent
 if "ano_inicial" in st.session_state and "ano_final" in st.session_state:
     data_inicio = pd.to_datetime(f"{st.session_state['ano_inicial']}-01-01")
