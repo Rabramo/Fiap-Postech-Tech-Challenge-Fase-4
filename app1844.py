@@ -91,8 +91,10 @@ cor_destaque = "#FF7F0E"  # Cor quente para anos importantes
 # Criando DF a partir do parquet com dados do Brent do Ipea (https://www.ipeadata.gov.br/Default.aspx), usando r, raw string para evitar problemas com barras
 # Função para carregar dados
 @st.cache_data
+@st.cache_data
 def carregar_dados():
-    df = pd.read_parquet(r'/Users/rogerioabramoalvespretti/Desktop/Fiap-Postech-Tech-Challenge-Fase-4/ipea_brent_20250217.parquet')
+    url = "https://raw.githubusercontent.com/seu-usuario/seu-repositorio/main/ipea_brent_20250217.parquet"
+    df = pd.read_parquet(url, engine="pyarrow")  # Adicione 'engine' para evitar conflitos
     df['ano'] = df['data'].dt.year
     return df
 
