@@ -93,7 +93,7 @@ cor_destaque = "#FF7F0E"  # Cor quente para anos importantes
 @st.cache_data
 @st.cache_data
 def carregar_dados():
-    url = "https://raw.githubusercontent.com/seu-usuario/seu-repositorio/main/ipea_brent_20250217.parquet"
+    url = "https://github.com/Rabramo/Fiap-Postech-Tech-Challenge-Fase-4/blob/main/ipea_brent_20250217.parquet"
     df = pd.read_parquet(url, engine="pyarrow")  # Adicione 'engine' para evitar conflitos
     df['ano'] = df['data'].dt.year
     return df
