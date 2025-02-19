@@ -6,13 +6,19 @@ import locale  # Configuração de localidade (moeda, número, data, etc.)
 import matplotlib.pyplot as plt  # Biblioteca para visualização de gráficos
 import seaborn as sns  # Biblioteca para visualização de dados avançada
 import numpy as np  # Cálculos matemáticos avançados e manipulação de arrays
+import plotly.graph_objects as go  # Biblioteca para criação de visualizações interativas, como gráficos de linha, barras e dispersão
 from datetime import datetime, timedelta  # Manipulação de datas e períodos de tempo
-from scipy.interpolate import make_interp_spline  # Interpolação para suavizar gráficos
-from statsmodels.tsa.stattools import adfuller
-from statsmodels.tsa.seasonal import seasonal_decompose
-from statsmodels.tsa.arima.model import ARIMA
-from statsmodels.tsa.statespace.sarimax import SARIMAX
-from sklearn.metrics import mean_squared_error, mean_absolute_error
+from scipy.interpolate import make_interp_spline  # Interpolação para suavizar gráficos, útil para visualizações mais suaves
+from statsmodels.tsa.stattools import adfuller  # Teste de Dickey-Fuller aumentado (ADF) para verificar estacionariedade de séries temporais
+from statsmodels.tsa.seasonal import seasonal_decompose  # Decomposição de séries temporais em tendência, sazonalidade e resíduo
+from statsmodels.tsa.arima.model import ARIMA  # Modelo ARIMA (AutoRegressive Integrated Moving Average) para previsão de séries temporais
+from statsmodels.tsa.statespace.sarimax import SARIMAX  # Modelo SARIMAX (ARIMA sazonal) para séries temporais com sazonalidade e variáveis exógenas
+from sklearn.metrics import mean_squared_error, mean_absolute_error  # Métricas para avaliação de modelos: erro médio absoluto (MAE) e erro médio quadrático (MSE)
+from prophet import Prophet  # Modelo de previsão de séries temporais desenvolvido pelo Facebook, baseado em decomposição aditiva
+from tensorflow.keras.models import Sequential  # API para construção de modelos de deep learning sequenciais no TensorFlow/Keras
+from tensorflow.keras.layers import LSTM, Dense  # LSTM: camada de rede neural recorrente para séries temporais; Dense: camada totalmente conectada
+from sklearn.preprocessing import MinMaxScaler  # Normalização de dados para modelos de machine learning, escalando valores para um intervalo específico
+
 
 ####### CONFIGURAÇÕES ########
 # Configuração do Streamlit
@@ -21,7 +27,8 @@ st.set_page_config(layout="wide")
 
 # Sidebar com menu de navegação
 st.sidebar.title("Menu")
-pagina_selecionada = st.sidebar.radio("Navegue para:", ["Brent: Converta Volatilidade em Ganho", "Estacionariedade, Tendências e Sazonalidades", "ARIMA/SARIMA"])
+pagina_selecionada = st.sidebar.radio('Aventure-se:',["Brent: Histórico", "Estacionariedade, Tendências e Sazonalidades", 
+                                                        "Prophet", "LSTM", "Sobre o Desafio", "Sobre o Desenvolvedor"])
 
 # Definir estilo do app
 st.markdown(
@@ -82,12 +89,30 @@ cor_min = "#2CA02C"  # Verde destacado
 cor_destaque = "#FF7F0E"  # Cor quente para anos importantes
 
 # Criando DF a partir do parquet com dados do Brent do Ipea (https://www.ipeadata.gov.br/Default.aspx), usando r, raw string para evitar problemas com barras
-df = pd.read_parquet(r'C:\Users\17609633801\Downloads\git\Fiap-Postech-Tech-Challenge-Fase-4\ipea_brent_20250217.parquet')
+# Função para carregar dados
+@st.cache_data
+def carregar_dados():
+    df = pd.read_parquet(r'/Users/rogerioabramoalvespretti/Desktop/Fiap-Postech-Tech-Challenge-Fase-4/ipea_brent_20250217.parquet')
+    df['ano'] = df['data'].dt.year
+    return df
+
+df = carregar_dados()
+
+# Recuperando datas selecionadas na página Brent
+if "ano_inicial" in st.session_state and "ano_final" in st.session_state:
+    data_inicio = pd.to_datetime(f"{st.session_state['ano_inicial']}-01-01")
+    data_fim = pd.to_datetime(f"{st.session_state['ano_final']}-12-31")
+else:
+    data_inicio = pd.to_datetime("2015-02-10")
+    data_fim = pd.to_datetime("2025-02-10")
+
+# Controle de exibição de páginas
+st.session_state.setdefault("pagina_anterior", None)
 
 
 #%% Brent: Converta Volatilidade em Ganho
 # Conteúdo da Brent: Converta Volatilidade em Ganho
-if pagina_selecionada == "Brent: Converta Volatilidade em Ganho":
+if pagina_selecionada == "Brent: Histórico":
     st.title('Brent: Domine a Volatilidade e Converta Oscilações em Lucros')
     '''
     O Brent é um dos principais benchmarks do mercado global de petróleo e sua volatilidade 
@@ -485,220 +510,239 @@ if pagina_selecionada == "Estacionariedade, Tendências e Sazonalidades":
         - **Sazonalidades**: Detectar padrões repetitivos em intervalos regulares (ex.: mensal, anual).
         ''')
 
-# Filtrar dados para o período de 10/02/2015 a 10/02/2025
-data_inicio = pd.to_datetime("2015-02-10")
-data_fim = pd.to_datetime("2025-02-10")
-df_periodo = df[(df['data'] >= data_inicio) & (df['data'] <= data_fim)]
-    
-if df_periodo.empty:
-    st.warning("Nenhum dado disponível para o período selecionado.")
-else:
-        # Gráfico da Série Temporal
+        # Filtrar dados para o período de 10/02/2015 a 10/02/2025
+        data_inicio = pd.to_datetime("2015-02-10")
+        data_fim = pd.to_datetime("2025-02-10")
+        df_periodo = df[(df['data'] >= data_inicio) & (df['data'] <= data_fim)]
+            
         st.subheader('Série Temporal do Preço do Brent (10/02/2015 - 10/02/2025)')
         fig_serie = px.line(df_periodo, x='data', y='preco', title='Preço do Brent ao Longo do Tempo',
-                            labels={'data': 'Data', 'preco': 'Preço (US$)'})
+                                    labels={'data': 'Data', 'preco': 'Preço (US$)'})
         fig_serie.update_layout(xaxis_title='Data', yaxis_title='Preço (US$)', hovermode='x unified')
         st.plotly_chart(fig_serie, use_container_width=True)
-    
-        # Análise de Estacionariedade (Teste de Dickey-Fuller Aumentado)
+            
+                # Análise de Estacionariedade (Teste de Dickey-Fuller Aumentado)
         st.subheader('Análise de Estacionariedade')
         st.markdown('''
-        Para verificar se a série é estacionária, aplicamos o **Teste de Dickey-Fuller Aumentado (ADF)**.
-        - **Hipótese Nula (H0)**: A série não é estacionária.
-        - **Hipótese Alternativa (H1)**: A série é estacionária.
-        Se o **p-valor** for menor que 0.05, rejeitamos H0 e consideramos a série estacionária.
-        ''')
-    
-        from statsmodels.tsa.stattools import adfuller
-    
+                Para verificar se a série é estacionária, aplicamos o **Teste de Dickey-Fuller Aumentado (ADF)**.
+                - **Hipótese Nula (H0)**: A série não é estacionária.
+                - **Hipótese Alternativa (H1)**: A série é estacionária.
+                Se o **p-valor** for menor que 0.05, rejeitamos H0 e consideramos a série estacionária.
+                ''')
+        
         # Aplicar o teste ADF
         resultado_adf = adfuller(df_periodo['preco'])
         p_valor = resultado_adf[1]
-    
+            
         st.write(f"**Estatística ADF:** {resultado_adf[0]:.4f}")
         st.write(f"**p-valor:** {p_valor:.4f}")
-    
+            
         if p_valor < 0.05:
             st.success("A série é **estacionária** (p-valor < 0.05).")
         else:
             st.warning("A série **não é estacionária** (p-valor ≥ 0.05).")
-    
+            
         # Análise de Tendências
         st.subheader('Análise de Tendências')
         st.markdown('''
-        Para identificar tendências, aplicamos uma **decomposição da série temporal**.
-        A decomposição separa a série em três componentes:
-        - **Tendência**: Padrão de crescimento ou declínio ao longo do tempo.
-        - **Sazonalidade**: Padrões repetitivos em intervalos regulares.
-        - **Resíduo**: Variações aleatórias não explicadas pela tendência ou sazonalidade.
-        ''')
-    
-        from statsmodels.tsa.seasonal import seasonal_decompose
-    
-        # Decomposição da série temporal
+                Para identificar tendências, aplicamos uma **decomposição da série temporal**.
+                A decomposição separa a série em três componentes:
+                - **Tendência**: Padrão de crescimento ou declínio ao longo do tempo.
+                - **Sazonalidade**: Padrões repetitivos em intervalos regulares.
+                - **Resíduo**: Variações aleatórias não explicadas pela tendência ou sazonalidade.
+                ''')
+            
+
+                # Decomposição da série temporal
         decomposicao = seasonal_decompose(df_periodo.set_index('data')['preco'], model='additive', period=365)
-    
-        # Gráfico da Tendência
+            
+                # Gráfico da Tendência
         st.write("**Tendência**")
         fig_tendencia = px.line(x=decomposicao.trend.index, y=decomposicao.trend, title='Tendência do Preço do Brent',
-                                labels={'x': 'Data', 'y': 'Preço (US$)'})
+                                        labels={'x': 'Data', 'y': 'Preço (US$)'})
         fig_tendencia.update_layout(xaxis_title='Data', yaxis_title='Preço (US$)')
         st.plotly_chart(fig_tendencia, use_container_width=True)
-    
-        # Gráfico da Sazonalidade
+            
+                # Gráfico da Sazonalidade
         st.write("**Sazonalidade**")
         fig_sazonalidade = px.line(x=decomposicao.seasonal.index, y=decomposicao.seasonal, title='Sazonalidade do Preço do Brent',
-                                   labels={'x': 'Data', 'y': 'Preço (US$)'})
+                                        labels={'x': 'Data', 'y': 'Preço (US$)'})
         fig_sazonalidade.update_layout(xaxis_title='Data', yaxis_title='Preço (US$)')
         st.plotly_chart(fig_sazonalidade, use_container_width=True)
-    
-        # Gráfico dos Resíduos
+            
+                # Gráfico dos Resíduos
         st.write("**Resíduos**")
         fig_residuos = px.line(x=decomposicao.resid.index, y=decomposicao.resid, title='Resíduos do Preço do Brent',
-                               labels={'x': 'Data', 'y': 'Preço (US$)'})
+                                    labels={'x': 'Data', 'y': 'Preço (US$)'})
         fig_residuos.update_layout(xaxis_title='Data', yaxis_title='Preço (US$)')
         st.plotly_chart(fig_residuos, use_container_width=True)
-    
+            
+                # Conclusão
+        st.subheader('Conclusão')
+        st.markdown(f'''
+                - **Estacionariedade**: A série é estacionária? {"Sim" if p_valor < 0.05 else "Não"}.
+                - **Tendência**: A tendência mostra um padrão de {"crescimento" if decomposicao.trend.mean() > 0 else "declínio"} ao longo do tempo.
+                - **Sazonalidade**: Padrões sazonais são {"evidentes" if decomposicao.seasonal.std() > 0 else "fracos ou inexistentes"}.
+                ''')
+ 
+#%  Prophet
+if pagina_selecionada == "Prophet":
+    st.title("Modelagem com Prophet")
+    st.markdown('''
+    O **Prophet** é uma ferramenta desenvolvida pelo Facebook para previsão de séries temporais.
+    Ele é especialmente útil para capturar:
+    - **Tendências**: Crescimento ou declínio ao longo do tempo.
+    - **Sazonalidades**: Padrões repetitivos (ex.: mensal, anual).
+    - **Eventos Especiais**: Impacto de feriados ou crises.
+    ''')
+
+    # Filtrar dados para o período de 10/02/2015 a 10/02/2025
+    data_inicio = pd.to_datetime("2015-02-10")
+    data_fim = pd.to_datetime("2025-02-10")
+    df_periodo = df[(df['data'] >= data_inicio) & (df['data'] <= data_fim)]
+
+    if df_periodo.empty:
+        st.warning("Nenhum dado disponível para o período selecionado.")
+    else:
+        # Preparar dados para o Prophet
+        df_prophet = df_periodo[['data', 'preco']].rename(columns={'data': 'ds', 'preco': 'y'})
+
+        # Dividir dados em treino e teste
+        train_size = int(len(df_prophet) * 0.8)
+        train, test = df_prophet.iloc[:train_size], df_prophet.iloc[train_size:]
+
+        # Treinar o modelo Prophet
+        st.write("**Treinando o modelo Prophet...aguarde, por favor.**")
+        modelo_prophet = Prophet()
+        modelo_prophet.fit(train)
+
+        # Fazer previsões
+        futuro = modelo_prophet.make_future_dataframe(periods=len(test))
+        previsoes = modelo_prophet.predict(futuro)
+
+        # Calcular métricas de desempenho
+        rmse = np.sqrt(mean_squared_error(test['y'], previsoes['yhat'].iloc[train_size:]))
+        mae = mean_absolute_error(test['y'], previsoes['yhat'].iloc[train_size:])
+
+        st.write(f"**RMSE:** {rmse:.2f}")
+        st.write(f"**MAE:** {mae:.2f}")
+
+        # Gráfico das Previsões
+        st.write("**Previsões vs Valores Reais**")
+        fig_previsoes = go.Figure()
+        fig_previsoes.add_trace(go.Scatter(x=test['ds'], y=test['y'], mode='lines', name='Valores Reais'))
+        fig_previsoes.add_trace(go.Scatter(x=test['ds'], y=previsoes['yhat'].iloc[train_size:], mode='lines', name='Previsões'))
+        fig_previsoes.update_layout(title='Previsões do Preço do Brent com Prophet', xaxis_title='Data', yaxis_title='Preço (US$)')
+        st.plotly_chart(fig_previsoes, use_container_width=True)
+
+        # Componentes do Modelo
+        st.write("**Componentes do Modelo Prophet**")
+        fig_componentes = modelo_prophet.plot_components(previsoes)
+        st.pyplot(fig_componentes)
+
         # Conclusão
         st.subheader('Conclusão')
         st.markdown(f'''
-        - **Estacionariedade**: A série é estacionária? {"Sim" if p_valor < 0.05 else "Não"}.
-        - **Tendência**: A tendência mostra um padrão de {"crescimento" if decomposicao.trend.mean() > 0 else "declínio"} ao longo do tempo.
-        - **Sazonalidade**: Padrões sazonais são {"evidentes" if decomposicao.seasonal.std() > 0 else "fracos ou inexistentes"}.
+        - **RMSE**: {rmse:.2f} (Raiz do Erro Quadrático Médio): Mede a diferença média entre os valores reais e as previsões.
+        - **MAE**: {mae:.2f} (Erro Absoluto Médio): Mede a diferença absoluta média entre os valores reais e as previsões.
+        - **Tendência**: O modelo capturou a tendência de {"crescimento" if previsoes['trend'].mean() > 0 else "declínio"}.
+        - **Sazonalidade**: Padrões sazonais foram {"evidentes" if previsoes['yearly'].std() > 0 else "fracos ou inexistentes"}.
         ''')
- 
-#%% ARIMA/SARIMA
-# Conteúdo da ARIMA/SARIMA
-if pagina_selecionada == "ARIMA/SARIMA":
-    st.title("Previsão com Modelos ARIMA/SARIMA")
-    
-    # Exibir o período selecionado com fundo amarelo e fonte menor
-    if 'ano_inicial' in st.session_state and 'ano_final' in st.session_state:
-        st.markdown(f'<div style="background-color: #FFF3CD; padding: 10px; border-radius: 5px; font-size: 1.2em;">'
-                    f'Período Selecionado: {st.session_state["ano_inicial"]} a {st.session_state["ano_final"]}</div>',
-                    unsafe_allow_html=True)
-        
-    st.text("")
-    
+
+#%% LSTM
+if pagina_selecionada == "LSTM":
+    st.title("Modelagem com LSTM")
     st.markdown('''
-    Nesta página, aplicamos modelos ARIMA ou SARIMA para prever os preços futuros do Brent e avaliamos a qualidade das previsões.
+    As **Redes Neurais Recorrentes (LSTM)** são poderosas para modelar séries temporais com padrões complexos e não lineares.
+    Vamos implementar um modelo LSTM para prever o preço do Brent.
     ''')
 
-    # Explicação dos Modelos ARIMA e SARIMA
-    st.markdown('''
-    ### O que são ARIMA e SARIMA?
-    - **ARIMA (AutoRegressive Integrated Moving Average)**: É um modelo estatístico usado para análise e previsão de séries temporais. Ele combina três componentes principais:
-      - **AR (AutoRegressive)**: Usa a relação entre uma observação e um número de observações anteriores.
-      - **I (Integrated)**: Usa a diferenciação das observações para tornar a série temporal estacionária.
-      - **MA (Moving Average)**: Usa a relação entre uma observação e um erro residual de uma média móvel aplicada a observações anteriores.
-    - **SARIMA (Seasonal ARIMA)**: É uma extensão do modelo ARIMA que inclui componentes sazonais para lidar com padrões que se repetem em intervalos regulares. O modelo SARIMA é especificado como (p, d, q) x (P, D, Q, s), onde os termos sazonais são representados por letras maiúsculas.
-    ''')
+    # Filtrar dados para o período de 10/02/2015 a 10/02/2025
+    data_inicio = pd.to_datetime("2015-02-10")
+    data_fim = pd.to_datetime("2025-02-10")
+    df_periodo = df[(df['data'] >= data_inicio) & (df['data'] <= data_fim)]
 
-    # Utilizar o período de ano selecionado na seção de seleção de período
-    if 'ano_inicial_dt' in st.session_state and 'ano_final_dt' in st.session_state:
-        data_inicio = st.session_state['ano_inicial_dt']
-        data_fim = st.session_state['ano_final_dt']
-        df_periodo = df[(df['data'] >= data_inicio) & (df['data'] <= data_fim)]
-
-        if df_periodo.empty:
-            st.warning("Nenhum dado disponível para o período selecionado.")
-        else:
-            with st.spinner('Processando... Por favor, aguarde.'):
-                # Dividir os dados em treino e teste
-                treino = df_periodo[df_periodo['data'] < '2024-01-01']
-                teste = df_periodo[df_periodo['data'] >= '2024-01-01']
-
-                # Verificar se a série é estacionária
-                resultado_adf = adfuller(treino['preco'])
-                p_valor = resultado_adf[1]
-
-                if p_valor < 0.05:
-                    # Série estacionária, usar ARIMA
-                    modelo = ARIMA(treino['preco'], order=(5, 1, 0))
-                else:
-                    # Série não estacionária, usar SARIMA
-                    modelo = SARIMAX(treino['preco'], order=(1, 1, 1), seasonal_order=(1, 1, 1, 12))
-
-                modelo_fit = modelo.fit()
-
-                # Fazer previsões
-                previsoes = modelo_fit.forecast(steps=len(teste))
-                teste['previsoes'] = previsoes.values
-
-                # Avaliar a qualidade das previsões
-                mse = mean_squared_error(teste['preco'], teste['previsoes'])
-                mae = mean_absolute_error(teste['preco'], teste['previsoes'])
-                aic = modelo_fit.aic
-                bic = modelo_fit.bic
-
-                st.write(f"**Erro Quadrático Médio (MSE):** {mse:.4f}")
-                st.write(f"**Erro Absoluto Médio (MAE):** {mae:.4f}")
-                st.write(f"**Akaike Information Criterion (AIC):** {aic:.4f}")
-                st.write(f"**Bayesian Information Criterion (BIC):** {bic:.4f}")
-
-                # Explicação dos indicadores de avaliação
-                st.markdown('''
-                ### Indicadores de Avaliação
-                - **Erro Quadrático Médio (MSE)**: Mede a média dos quadrados dos erros. Um valor menor indica um modelo melhor.
-                - **Erro Absoluto Médio (MAE)**: Mede a média dos erros absolutos. Um valor menor indica um modelo melhor.
-                - **Akaike Information Criterion (AIC)**: Mede a qualidade do modelo em relação ao número de parâmetros. Um valor menor indica um modelo melhor.
-                - **Bayesian Information Criterion (BIC)**: Similar ao AIC, mas penaliza modelos com mais parâmetros. Um valor menor indica um modelo melhor.
-                ''')
-
-                # Resultados
-                st.markdown(f'''
-                ### Resultados
-                - **Erro Quadrático Médio (MSE):** {mse:.4f}
-                - **Erro Absoluto Médio (MAE):** {mae:.4f}
-                - **Akaike Information Criterion (AIC):** {aic:.4f}
-                - **Bayesian Information Criterion (BIC):** {bic:.4f}
-                ''')
-
-                # Avaliação dos resultados
-                st.markdown('''
-                ### Avaliação dos Resultados
-                - **MSE** e **MAE** baixos indicam que o modelo está fazendo previsões precisas.
-                - **AIC** e **BIC** baixos indicam que o modelo é eficiente em termos de número de parâmetros.
-                - Valores altos de **MSE** e **MAE** podem indicar problemas no modelo, como:
-                    - Dados insuficientes ou de baixa qualidade.
-                    - Padrões sazonais ou tendências não capturados adequadamente.
-                    - Parâmetros do modelo não otimizados.
-                ''')
-
-                # Sugestões para melhorar o desempenho
-                st.markdown('''
-                ### Sugestões para Melhorar o Desempenho
-                - **Diminuir o Período de Análise**: Reduzir o período de análise pode ajudar a capturar melhor as tendências e padrões sazonais.
-                - **Aumentar a Qualidade dos Dados**: Garantir que os dados são precisos e completos.
-                - **Ajustar os Parâmetros do Modelo**: Experimentar diferentes combinações de parâmetros para encontrar o melhor ajuste.
-                ''')
-
-                # Gráfico das Previsões
-                st.subheader('Previsões do Preço do Brent')
-                fig_previsoes = px.line(teste, x='data', y=['preco', 'previsoes'], title='Previsões do Preço do Brent',
-                                        labels={'value': 'Preço (US$)', 'variable': 'Série'},
-                                        color_discrete_map={'preco': 'blue', 'previsoes': 'red'})
-                fig_previsoes.update_layout(xaxis_title='Data', yaxis_title='Preço (US$)')
-                st.plotly_chart(fig_previsoes, use_container_width=True)
-            
-            # Exibir mensagem de sucesso ao finalizar o processamento
-            st.success('Processamento concluído com sucesso!')
-
-            # Projeção de 15 dias a partir do último dia da base de dados
-            st.subheader('Projeção de 15 Dias')
-            ultima_data = df_periodo['data'].max()
-            previsoes_15_dias = modelo_fit.forecast(steps=15)
-            datas_previsoes = pd.date_range(start=ultima_data, periods=15, freq='D')
-            df_previsoes_15_dias = pd.DataFrame({'data': datas_previsoes, 'previsoes': previsoes_15_dias})
-
-            fig_previsoes_15_dias = px.line(df_previsoes_15_dias, x='data', y='previsoes', title='Projeção de 15 Dias do Preço do Brent',
-                                            labels={'data': 'Data', 'previsoes': 'Preço (US$)'})
-            fig_previsoes_15_dias.update_layout(xaxis_title='Data', yaxis_title='Preço (US$)')
-            st.plotly_chart(fig_previsoes_15_dias, use_container_width=True)
+    if df_periodo.empty:
+        st.warning("Nenhum dado disponível para o período selecionado.")
     else:
-        st.warning("Por favor, selecione um período na Página 1.")
+        # Preparar dados para o LSTM
+        dados = df_periodo['preco'].values.reshape(-1, 1)
+        scaler = MinMaxScaler(feature_range=(0, 1))
+        dados_escalados = scaler.fit_transform(dados)
 
+        # Criar sequências temporais
+        def criar_sequencias(dados, janela_temporal):
+            X, y = [], []
+            for i in range(janela_temporal, len(dados)):
+                X.append(dados[i-janela_temporal:i, 0])
+                y.append(dados[i, 0])
+            return np.array(X), np.array(y)
 
+        janela_temporal = 60
+        X, y = criar_sequencias(dados_escalados, janela_temporal)
+        X = X.reshape((X.shape[0], X.shape[1], 1))
 
+        # Dividir dados em treino e teste
+        train_size = int(len(X) * 0.8)
+        X_train, X_test = X[:train_size], X[train_size:]
+        y_train, y_test = y[:train_size], y[train_size:]
 
+        # Construir o modelo LSTM
+        st.write("**Construindo e treinando o modelo LSTM...aguarde, por favor**")
+        modelo_lstm = Sequential()
+        modelo_lstm.add(LSTM(units=50, return_sequences=True, input_shape=(X_train.shape[1], 1)))
+        modelo_lstm.add(LSTM(units=50, return_sequences=False))
+        modelo_lstm.add(Dense(units=25))
+        modelo_lstm.add(Dense(units=1))
 
+        modelo_lstm.compile(optimizer='adam', loss='mean_squared_error')
+        modelo_lstm.fit(X_train, y_train, batch_size=32, epochs=20)
+
+        # Fazer previsões
+        previsoes = modelo_lstm.predict(X_test)
+        previsoes = scaler.inverse_transform(previsoes)
+        y_test = scaler.inverse_transform(y_test.reshape(-1, 1))
+
+        # Calcular métricas de desempenho
+        rmse = np.sqrt(mean_squared_error(y_test, previsoes))
+        mae = mean_absolute_error(y_test, previsoes)
+
+        st.write(f"**RMSE:** {rmse:.2f}")
+        st.write(f"**MAE:** {mae:.2f}")
+
+        # Gráfico das Previsões
+        st.write("**Previsões vs Valores Reais**")
+        fig_previsoes = go.Figure()
+        fig_previsoes.add_trace(go.Scatter(x=df_periodo['data'].iloc[train_size+janela_temporal:], y=y_test.flatten(), mode='lines', name='Valores Reais'))
+        fig_previsoes.add_trace(go.Scatter(x=df_periodo['data'].iloc[train_size+janela_temporal:], y=previsoes.flatten(), mode='lines', name='Previsões'))
+        fig_previsoes.update_layout(title='Previsões do Preço do Brent com LSTM', xaxis_title='Data', yaxis_title='Preço (US$)')
+        st.plotly_chart(fig_previsoes, use_container_width=True)
+
+        # Conclusão
+        st.subheader('Conclusão')
+        st.markdown(f'''
+        - **RMSE**: {rmse:.2f} (Raiz do Erro Quadrático Médio): Mede a diferença média entre os valores reais e as previsões.
+        - **MAE**: {mae:.2f} (Erro Absoluto Médio): Mede a diferença absoluta média entre os valores reais e as previsões.
+        - **Desempenho**: O modelo LSTM capturou padrões complexos na série temporal.
+        ''')
+
+if pagina_selecionada == "Sobre o Desafio":
+    st.title("Sobre o Desafio")
+    st.markdown('''
+    O desafio é o Tech Challenge da fase 4, Data Viz and Production Models, da Pos Tech em Data Analytics da Fiap/Alura, da turma 6DTA. 
+    
+    Os alunos devem construir uma aplicação web para análise e previsão do preço do barril de petróleo Brent, utilizando técnicas de análise de séries temporais e modelagem preditiva. 
+                
+    O projeto envolve deploy de um MVP (Minimum Viable Product), ou Produto Mínimo Viável, que é uma versão simplificada de um produto ou serviço.
+    O MPV  contém apenas as funcionalidades essenciais para ser testado no mercado com o menor esforço e custo possíveis. 
+    
+    O objetivo do MVP é validar uma ideia, coletar feedback dos usuários reais e fazer ajustes antes de um lançamento completo.
+                
+    ''')
+if pagina_selecionada == "Sobre o Desenvolvedor":
+    st.title("Sobre o Desenvolvedor")
+    st.markdown('''
+    O **grupo 49** atualmente é formado apenas por um integrante, o aluno **Rogério Abramo Alves Pretti*, RM 357672, 
+                do curso de Pós-Graduação em Data Analytics da Fiap/Alura, da turma 6DTA.
+    ''')
+  
