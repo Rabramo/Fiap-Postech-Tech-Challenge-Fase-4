@@ -202,6 +202,7 @@ if pagina_selecionada == "Brent: Histórico":
     ano_inicial = pd.to_datetime(f"{ano_inicial}-01-01")
     ano_final = pd.to_datetime(f"{ano_final}-12-31")
 
+    df["data"] = pd.to_datetime(df["data"], errors='coerce')  
     # Filtrar o DataFrame pelo intervalo de anos
     df_filtrado = df[(df["data"] >= ano_inicial) & (df["data"] <= ano_final)]
 
