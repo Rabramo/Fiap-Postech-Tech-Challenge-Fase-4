@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt  # Biblioteca para visualização de gráficos
 import seaborn as sns  # Biblioteca para visualização de dados avançada
 import numpy as np  # Cálculos matemáticos avançados e manipulação de arrays
 import plotly.graph_objects as go  # Biblioteca para criação de visualizações interativas, como gráficos de linha, barras e dispersão
+import requests # para fazer requisições comom baixar um arquivo por ex.
 from datetime import datetime, timedelta  # Manipulação de datas e períodos de tempo
 from scipy.interpolate import make_interp_spline  # Interpolação para suavizar gráficos, útil para visualizações mais suaves
 from statsmodels.tsa.stattools import adfuller  # Teste de Dickey-Fuller aumentado (ADF) para verificar estacionariedade de séries temporais
