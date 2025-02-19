@@ -117,7 +117,7 @@ def carregar_dados():
 df = carregar_dados()
 # Exibir os dados no Streamlit
 # if df is not None:
-    st.success("✅ Dados carregados com sucesso!")
+st.success("✅ Dados carregados com sucesso!")
 #   st.dataframe(df)
 # Recuperando datas selecionadas na página Brent
 if "ano_inicial" in st.session_state and "ano_final" in st.session_state:
