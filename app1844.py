@@ -768,7 +768,8 @@ if pagina_selecionada == "Sobre o Desenvolvedor":
                 do curso de Pós-Graduação em Data Analytics da Fiap/Alura, da turma 6DTA.
     ''')
   
-def main():
+#%% Video Explicativo
+if pagina_selecionada == "Video Explicativo":
     st.title("Video Descritivo")
     
     # Link do vídeo do YouTube
@@ -776,6 +777,3 @@ def main():
     
     # Exibe o vídeo
     st.video(video_url)
-
-if __name__ == "__main__":
-    main()
