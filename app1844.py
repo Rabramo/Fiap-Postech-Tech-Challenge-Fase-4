@@ -30,7 +30,7 @@ st.set_page_config(layout="wide")
 # Sidebar com menu de navegação
 st.sidebar.title("Menu")
 pagina_selecionada = st.sidebar.radio('Aventure-se:',["Brent: Histórico", "Estacionariedade, Tendências e Sazonalidades", 
-                                                        "Prophet", "LSTM", "Sobre o Desafio", "Sobre o Desenvolvedor"])
+                                                        "Prophet", "LSTM", "Video Explicativo", "Sobre o Desafio", "Sobre o Desenvolvedor"])
 
 # Definir estilo do app
 st.markdown(
@@ -768,3 +768,14 @@ if pagina_selecionada == "Sobre o Desenvolvedor":
                 do curso de Pós-Graduação em Data Analytics da Fiap/Alura, da turma 6DTA.
     ''')
   
+def main():
+    st.title("Video Descritivo")
+    
+    # Link do vídeo do YouTube
+    video_url = "https://youtu.be/a12t0Uigz3E"
+    
+    # Exibe o vídeo
+    st.video(video_url)
+
+if __name__ == "__main__":
+    main()
