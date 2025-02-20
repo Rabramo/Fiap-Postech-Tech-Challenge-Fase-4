@@ -751,7 +751,7 @@ if pagina_selecionada == "LSTM":
 if pagina_selecionada == "Sobre o Desafio":
     st.title("Sobre o Desafio")
     st.markdown('''
-    O desafio é o Tech Challenge da fase 4, Data Viz and Production Models, da Pos Tech em Data Analytics da Fiap/Alura, da turma 6DTA. 
+    O desafio é o Tech Challenge da fase 4, Data Viz and Production Models, da Pos Tech em Data Analytics da Fiap+Alura, da turma 6DTA. 
     
     Os alunos devem construir uma aplicação web para análise e previsão do preço do barril de petróleo Brent, utilizando técnicas de análise de séries temporais e modelagem preditiva. 
                 
@@ -764,12 +764,14 @@ if pagina_selecionada == "Sobre o Desafio":
 if pagina_selecionada == "Sobre o Desenvolvedor":
     st.title("Sobre o Desenvolvedor")
     st.markdown('''
-    O **grupo 49**, no desenvolvimento desta aplicação para a fase 4 da turma 6DTA, do curso de Pós-Graduação em Data Analytics da Fiap/Alura,   contou apenas com um integrante:
+    O **grupo 49** desenvolveu esta aplicação para a fase 4 da turma 6DTA, do curso de Pós-Graduação em Data Analytics da FIAP/Alura. O grupo contou com um integrante dedicado:
 
-   o aluno **Rogério Abramo Alves Pretti**, RM 357672, 
-                do curso de Pós-Graduação em Data Analytics da Fiap/Alura, da turma 6DTA.
+    - **Rogério Abramo Alves Pretti**, RM 357672.
+
+    Para saber mais sobre o curso, acesse o link abaixo:
+
+    Pós Tech em Data Analytics da FIAP+Alura
     ''')
-  
 #%% Video Explicativo
 if pagina_selecionada == "Video Explicativo":
     st.title("Video Descritivo")
