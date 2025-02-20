@@ -766,9 +766,7 @@ if pagina_selecionada == "Sobre o Desenvolvedor":
     st.markdown('''
     O **grupo 49** desenvolveu esta aplicação para a fase 4 da turma 6DTA da [Pós Tech em Data Analytics da FIAP+Alura](https://postech.fiap.com.br/curso/data-analytics/). 
     
-    Para esta atividade, o grupo contou apenas com um integrante:
-
-    - **Rogério Abramo Alves Pretti**, RM 357672.
+    Para esta atividade, o grupo contou apenas com o integrante **Rogério Abramo Alves Pretti**, RM 357672.
 
     ''')
 #%% Video Explicativo
