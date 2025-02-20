@@ -764,13 +764,12 @@ if pagina_selecionada == "Sobre o Desafio":
 if pagina_selecionada == "Sobre o Desenvolvedor":
     st.title("Sobre o Desenvolvedor")
     st.markdown('''
-    O **grupo 49** desenvolveu esta aplicação para a fase 4 da turma 6DTA, do curso de Pós-Graduação em Data Analytics da FIAP/Alura. O grupo contou com um integrante dedicado:
+    O **grupo 49** desenvolveu esta aplicação para a fase 4 da turma 6DTA da [Pós Tech em Data Analytics da FIAP+Alura](https://postech.fiap.com.br/curso/data-analytics/). 
+    
+    Para esta atividade, o grupo contou apenas com um integrante:
 
     - **Rogério Abramo Alves Pretti**, RM 357672.
 
-    Para saber mais sobre o curso, acesse o link abaixo:
-
-    Pós Tech em Data Analytics da FIAP+Alura
     ''')
 #%% Video Explicativo
 if pagina_selecionada == "Video Explicativo":
