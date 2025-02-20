@@ -764,7 +764,7 @@ if pagina_selecionada == "Sobre o Desafio":
 if pagina_selecionada == "Sobre o Desenvolvedor":
     st.title("Sobre o Desenvolvedor")
     st.markdown('''
-    O **grupo 49** atualmente é formado apenas por um integrante, o aluno **Rogério Abramo Alves Pretti*, RM 357672, 
+    O **grupo 49** atualmente é formado apenas por um integrante, o aluno *Rogério Abramo Alves Pretti*, RM 357672, 
                 do curso de Pós-Graduação em Data Analytics da Fiap/Alura, da turma 6DTA.
     ''')
   
