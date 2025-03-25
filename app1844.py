@@ -769,12 +769,4 @@ if pagina_selecionada == "Sobre o Desenvolvedor":
     Para esta atividade, o grupo contou apenas com o integrante **Rogério Abramo Alves Pretti**, RM 357672.
 
     ''')
-#%% Video Explicativo
-if pagina_selecionada == "Video Explicativo":
-    st.title("Video Descritivo")
-    
-    # Link do vídeo do YouTube
-    video_url = "https://youtu.be/a12t0Uigz3E"
-    
-    # Exibe o vídeo
-    st.video(video_url)
+
